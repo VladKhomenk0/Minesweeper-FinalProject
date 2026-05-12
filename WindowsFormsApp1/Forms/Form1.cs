@@ -2,9 +2,10 @@
 using System.Collections.Generic;
 using System.Data;
 using System.Drawing;
+using System.IO;
 using System.Linq;
 using System.Windows.Forms;
-using System.IO;
+using WindowsFormsApp1.Core.Commands;
 
 namespace WindowsFormsApp1.Core
 {
@@ -186,7 +187,7 @@ namespace WindowsFormsApp1.Core
             List<Cell> changedCells = new();
             bool wasFirstClick = game.IsFirstClick;
 
-            ICommand cmd = null;
+            ICellCommand cmd = null;
 
             // Замість прямих викликів генерування команди
             if (e.Button == MouseButtons.Left)
