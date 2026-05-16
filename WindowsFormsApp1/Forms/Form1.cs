@@ -431,23 +431,8 @@ namespace WindowsFormsApp1.Core
 
             resumeButton.Click += (s, e) =>
             {
-                isPaused = false;
-                timeManager.Start();
-
-                pauseOverlayPanel.Visible = false;
-
-                panelGame.Enabled = true;
-                buttonNewGame.Enabled = true;
-                buttonStartGame.Enabled = true;
-
-                radioEasy.Enabled = true;
-                radioMedium.Enabled = true;
-                radioHard.Enabled = true;
-
-                lblSafeOpensRemaining.BringToFront();
-                labelProgress.BringToFront();
-                customTooltip.BringToFront();
-                btnSafeCell.BringToFront();
+                // РЕФАКТОРИНГ: Замість дублювання коду викликаємо метод
+                ResumeGame();
             };
 
             Button saveExitButton = new Button
@@ -475,6 +460,47 @@ namespace WindowsFormsApp1.Core
             this.Controls.Add(pauseOverlayPanel);
         }
 
+
+        // --- ДОДАНО: Виділені методи для інкапсуляції логіки паузи (Extract Method) ---
+        private void PauseGame()
+        {
+            isPaused = true;
+            timeManager.Stop();
+
+            panelGame.Enabled = false;
+            buttonNewGame.Enabled = false;
+            buttonStartGame.Enabled = false;
+
+            radioEasy.Enabled = false;
+            radioMedium.Enabled = false;
+            radioHard.Enabled = false;
+
+            pauseOverlayPanel.Visible = true;
+            pauseOverlayPanel.BringToFront();
+        }
+
+        private void ResumeGame()
+        {
+            isPaused = false;
+            timeManager.Start();
+
+            panelGame.Enabled = true;
+            buttonNewGame.Enabled = true;
+            buttonStartGame.Enabled = true;
+
+            radioEasy.Enabled = true;
+            radioMedium.Enabled = true;
+            radioHard.Enabled = true;
+
+            pauseOverlayPanel.Visible = false;
+
+            lblSafeOpensRemaining.BringToFront();
+            labelProgress.BringToFront();
+            customTooltip.BringToFront();
+            btnSafeCell.BringToFront();
+        }
+        // ---------------------------------------------------------------------------------
+
         protected override bool ProcessCmdKey(ref Message msg, Keys keyData)
         {
             if (keyData == Keys.Escape)
@@ -484,38 +510,13 @@ namespace WindowsFormsApp1.Core
 
                 if (!isPaused)
                 {
-                    isPaused = true;
-                    timeManager.Stop();
-
-                    panelGame.Enabled = false;
-                    buttonNewGame.Enabled = false;
-                    buttonStartGame.Enabled = false;
-
-                    radioEasy.Enabled = false;
-                    radioMedium.Enabled = false;
-                    radioHard.Enabled = false;
-
-                    pauseOverlayPanel.Visible = true;
-                    pauseOverlayPanel.BringToFront();
+                    // РЕФАКТОРИНГ
+                    PauseGame();
                 }
                 else
                 {
-                    isPaused = false;
-                    timeManager.Start();
-
-                    panelGame.Enabled = true;
-                    buttonNewGame.Enabled = true;
-                    buttonStartGame.Enabled = true;
-
-                    radioEasy.Enabled = true;
-                    radioMedium.Enabled = true;
-                    radioHard.Enabled = true;
-
-                    pauseOverlayPanel.Visible = false;
-                    lblSafeOpensRemaining.BringToFront();
-                    labelProgress.BringToFront();
-                    customTooltip.BringToFront();
-                    btnSafeCell.BringToFront();
+                    // РЕФАКТОРИНГ
+                    ResumeGame();
                 }
 
                 return true;
@@ -527,23 +528,12 @@ namespace WindowsFormsApp1.Core
         private void pausePanel_Click(object sender, EventArgs e)
         {
             if (!gameStarted || game.State != GameState.Playing)
-                return; 
+                return;
 
             if (isPaused) return;
 
-                isPaused = true;
-                timeManager.Stop();
-
-                panelGame.Enabled = false;
-                buttonNewGame.Enabled = false;
-                buttonStartGame.Enabled = false;
-
-                radioEasy.Enabled = false;
-                radioMedium.Enabled = false;
-                radioHard.Enabled = false;
-
-                pauseOverlayPanel.Visible = true;
-                pauseOverlayPanel.BringToFront();
+            // РЕФАКТОРИНГ
+            PauseGame();
         }
 
         private string GetDifficultyDisplayName(Difficulty diff)
