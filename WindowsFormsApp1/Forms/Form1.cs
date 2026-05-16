@@ -266,21 +266,31 @@ namespace WindowsFormsApp1.Core
                 await replayManager.PlayReplayAsync();
             }
 
-            if (selectedDifficulty == Difficulty.Easy)
+            switch (selectedDifficulty)
             {
-                var result = MessageBox.Show("Вітаємо, Ви пройшли легкий рівень!\n\nПерейти до середнього рівня?", "Перемога", MessageBoxButtons.YesNo);
-                if (result == DialogResult.Yes) { radioMedium.Checked = true; StartGame(); labelProgress.Text = $"Відкрито:\n{game.GetRevealedPercentage()}%"; }
-            }
-            else if (selectedDifficulty == Difficulty.Medium)
-            {
-                var result = MessageBox.Show("Чудово! Ви пройшли середній рівень.\n\nПерейти до складного рівня?", "Перемога", MessageBoxButtons.YesNo);
-                if (result == DialogResult.Yes) { radioHard.Checked = true; StartGame(); labelProgress.Text = $"Відкрито:\n{game.GetRevealedPercentage()}%"; }
-            }
-            else if (selectedDifficulty == Difficulty.Hard)
-            {
-                MessageBox.Show("Вітаємо, Вам вдалось пройти останній рівень складності!", "Перемога", MessageBoxButtons.OK);
-                var result = MessageBox.Show("Грати ще раз?", "Нова гра", MessageBoxButtons.YesNo);
-                if (result == DialogResult.Yes) StartGame();
+                case Difficulty.Easy:
+                    if (MessageBox.Show("Вітаємо, Ви пройшли легкий рівень!\n\nПерейти до середнього рівня?", "Перемога", MessageBoxButtons.YesNo) == DialogResult.Yes)
+                    {
+                        radioMedium.Checked = true;
+                        StartGame();
+                    }
+                    break;
+
+                case Difficulty.Medium:
+                    if (MessageBox.Show("Чудово! Ви пройшли середній рівень.\n\nПерейти до складного рівня?", "Перемога", MessageBoxButtons.YesNo) == DialogResult.Yes)
+                    {
+                        radioHard.Checked = true;
+                        StartGame();
+                    }
+                    break;
+
+                case Difficulty.Hard:
+                    MessageBox.Show("Вітаємо, Вам вдалось пройти останній рівень складності!", "Перемога", MessageBoxButtons.OK);
+                    if (MessageBox.Show("Грати ще раз?", "Нова гра", MessageBoxButtons.YesNo) == DialogResult.Yes)
+                    {
+                        StartGame();
+                    }
+                    break;
             }
         }
 
