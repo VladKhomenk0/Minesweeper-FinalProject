@@ -1,12 +1,13 @@
 ﻿using System.Collections.Generic;
 using System.Threading.Tasks;
 using System.Windows.Forms;
+using WindowsFormsApp1.Core.Commands;
 
 namespace WindowsFormsApp1.Core
 {
     public class ReplayManager
     {
-        private List<ICommand> _commands = new List<ICommand>();
+        private List<ICellCommand> _commands = new List<ICellCommand>();
         private GameMemento _initialState;
         private Game _game;
         private GameRenderer _renderer;
@@ -26,7 +27,7 @@ namespace WindowsFormsApp1.Core
             _initialState = state;
         }
 
-        public void AddCommand(ICommand command)
+        public void AddCommand(ICellCommand command)
         {
             if (!IsReplaying)
             {

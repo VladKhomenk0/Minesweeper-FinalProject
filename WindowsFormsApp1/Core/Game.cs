@@ -1,7 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Windows.Forms;
 
 namespace WindowsFormsApp1.Core
 {
@@ -167,19 +166,7 @@ namespace WindowsFormsApp1.Core
                 IsFirstClick = isFirstClick
             };
 
-            foreach (var cell in Board.Cells)
-            {
-                memento.Cells.Add(new CellMemento
-                {
-                    X = cell.X,
-                    Y = cell.Y,
-                    IsMine = cell.IsMine,
-                    NeighborMineCount = cell.NeighborMineCount,
-                    IsRevealed = saveRevealState && cell.IsRevealed,
-                    IsFlagged = saveRevealState && cell.IsFlagged
-                });
-            }
-
+            memento.Cells.AddRange(CreateCellMementos(false));
             return memento;
         }
 
@@ -202,5 +189,38 @@ namespace WindowsFormsApp1.Core
         }
 
         public bool IsFirstClick => isFirstClick;
+
+        public GameMemento GetCleanState()
+        {
+            var memento = new GameMemento
+            {
+                PlayerName = ProfileManager.Instance.CurrentProfile.Name,
+                GameDifficulty = this.Difficulty,
+                ElapsedSeconds = 0,
+                CurrentState = GameState.Playing,
+                IsFirstClick = false
+            };
+
+            memento.Cells.AddRange(CreateCellMementos(true));
+            return memento;
+        }
+
+        private List<CellMemento> CreateCellMementos(bool asCleanState)
+        {
+            var mementos = new List<CellMemento>();
+            foreach (var cell in Board.Cells)
+            {
+                mementos.Add(new CellMemento
+                {
+                    X = cell.X,
+                    Y = cell.Y,
+                    IsMine = cell.IsMine,
+                    NeighborMineCount = cell.NeighborMineCount,
+                    IsRevealed = !asCleanState && cell.IsRevealed,
+                    IsFlagged = !asCleanState && cell.IsFlagged
+                });
+            }
+            return mementos;
+        }
     }
 }
