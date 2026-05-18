@@ -43,8 +43,7 @@ namespace WindowsFormsApp1.Core
 
             if (isFirstClick)
             {
-                Board.PlaceMinesAvoiding(row, col);
-                isFirstClick = false;
+                HandleFirstClick(row, col);
             }
 
             if (State != GameState.Playing)
@@ -57,23 +56,40 @@ namespace WindowsFormsApp1.Core
 
             if (cell.IsMine)
             {
-                cell.IsRevealed = true;
-                changedCells.Add(cell);
-                State = GameState.Lost;
-
-                foreach (var c in Board.Cells)
-                {
-                    if (c.IsMine)
-                    {
-                        c.IsRevealed = true;
-                        changedCells.Add(c);
-                    }
-                }
-
-                GameEnded?.Invoke(State);
-                return changedCells;
+                return HandleLoss(changedCells);
             }
 
+            HandleSafeReveal(cell, row, col, changedCells);
+
+            CheckWinCondition();
+            return changedCells;
+        }
+
+        private void HandleFirstClick(int row, int col)
+        {
+            Board.PlaceMinesAvoiding(row, col);
+            isFirstClick = false;
+        }
+
+        private List<Cell> HandleLoss(List<Cell> changedCells)
+        {
+            State = GameState.Lost;
+
+            foreach (var c in Board.Cells)
+            {
+                if (c.IsMine && !c.IsRevealed)
+                {
+                    c.IsRevealed = true;
+                    changedCells.Add(c);
+                }
+            }
+
+            GameEnded?.Invoke(State);
+            return changedCells;
+        }
+
+        private void HandleSafeReveal(Cell cell, int row, int col, List<Cell> changedCells)
+        {
             if (cell.NeighborMineCount == 0)
             {
                 changedCells.AddRange(Board.RevealEmptyArea(row, col));
@@ -83,9 +99,6 @@ namespace WindowsFormsApp1.Core
                 cell.IsRevealed = true;
                 changedCells.Add(cell);
             }
-
-            CheckWinCondition();
-            return changedCells;
         }
 
         public void ToggleFlag(int row, int col)
