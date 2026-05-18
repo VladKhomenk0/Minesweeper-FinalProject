@@ -1,7 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Windows.Forms;
 
 namespace WindowsFormsApp1.Core
 {
@@ -10,11 +9,13 @@ namespace WindowsFormsApp1.Core
         public Board Board { get; private set; }
         public Difficulty Difficulty { get; private set; }
         public GameState State { get; private set; }
+
         public Game(Difficulty difficulty)
         {
             Difficulty = difficulty;
             StartNewGame();
         }
+
         public void StartNewGame()
         {
             State = GameState.Playing;
@@ -136,7 +137,6 @@ namespace WindowsFormsApp1.Core
             return (int)((revealed / (double)total) * 100);
         }
 
-        // Створення та відновлення стану 
         public GameMemento CreateMemento(int currentElapsedSeconds)
         {
             var memento = new GameMemento
@@ -148,18 +148,7 @@ namespace WindowsFormsApp1.Core
                 IsFirstClick = this.isFirstClick
             };
 
-            foreach (var cell in Board.Cells)
-            {
-                memento.Cells.Add(new CellMemento
-                {
-                    X = cell.X,
-                    Y = cell.Y,
-                    IsRevealed = cell.IsRevealed,
-                    IsMine = cell.IsMine,
-                    IsFlagged = cell.IsFlagged,
-                    NeighborMineCount = cell.NeighborMineCount
-                });
-            }
+            memento.Cells.AddRange(CreateCellMementos(false));
             return memento;
         }
 
@@ -169,10 +158,8 @@ namespace WindowsFormsApp1.Core
             this.State = memento.CurrentState;
             this.isFirstClick = memento.IsFirstClick;
 
-            // Перестворення пустого поля потрібного розміру
             this.Board = CreateBoard(this.Difficulty);
 
-            // Відновлення стану кожної клітинки
             foreach (var savedCell in memento.Cells)
             {
                 var cell = Board.Cells[savedCell.X, savedCell.Y];
@@ -185,7 +172,6 @@ namespace WindowsFormsApp1.Core
 
         public bool IsFirstClick => isFirstClick;
 
-        // Зберігання чистого стану поля з розставленими мінами
         public GameMemento GetCleanState()
         {
             var memento = new GameMemento
@@ -197,19 +183,26 @@ namespace WindowsFormsApp1.Core
                 IsFirstClick = false
             };
 
+            memento.Cells.AddRange(CreateCellMementos(true));
+            return memento;
+        }
+
+        private List<CellMemento> CreateCellMementos(bool asCleanState)
+        {
+            var mementos = new List<CellMemento>();
             foreach (var cell in Board.Cells)
             {
-                memento.Cells.Add(new CellMemento
+                mementos.Add(new CellMemento
                 {
                     X = cell.X,
                     Y = cell.Y,
                     IsMine = cell.IsMine,
                     NeighborMineCount = cell.NeighborMineCount,
-                    IsRevealed = false,
-                    IsFlagged = false
+                    IsRevealed = !asCleanState && cell.IsRevealed,
+                    IsFlagged = !asCleanState && cell.IsFlagged
                 });
             }
-            return memento;
+            return mementos;
         }
     }
 }
