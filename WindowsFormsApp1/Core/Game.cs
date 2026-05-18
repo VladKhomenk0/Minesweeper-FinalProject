@@ -128,9 +128,7 @@ namespace WindowsFormsApp1.Core
         public int GetRevealedPercentage()
         {
             if (State == GameState.Won)
-            {
                 return 100;
-            }
 
             int total = Board.Cells.Length;
             int revealed = Board.Cells.Cast<Cell>().Count(c => c.IsRevealed);
@@ -139,13 +137,33 @@ namespace WindowsFormsApp1.Core
 
         public GameMemento CreateMemento(int currentElapsedSeconds)
         {
+            return BuildMemento(
+                elapsedSeconds: currentElapsedSeconds,
+                state: this.State,
+                isFirstClick: this.isFirstClick,
+                saveRevealState: true
+            );
+        }
+
+        public GameMemento GetCleanState()
+        {
+            return BuildMemento(
+                elapsedSeconds: 0,
+                state: GameState.Playing,
+                isFirstClick: false,
+                saveRevealState: false
+            );
+        }
+
+        private GameMemento BuildMemento(int elapsedSeconds, GameState state, bool isFirstClick, bool saveRevealState)
+        {
             var memento = new GameMemento
             {
                 PlayerName = ProfileManager.Instance.CurrentProfile.Name,
                 GameDifficulty = this.Difficulty,
-                ElapsedSeconds = currentElapsedSeconds,
-                CurrentState = this.State,
-                IsFirstClick = this.isFirstClick
+                ElapsedSeconds = elapsedSeconds,
+                CurrentState = state,
+                IsFirstClick = isFirstClick
             };
 
             memento.Cells.AddRange(CreateCellMementos(false));
