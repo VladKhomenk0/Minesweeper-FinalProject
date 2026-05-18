@@ -2,9 +2,10 @@
 using System.Collections.Generic;
 using System.Data;
 using System.Drawing;
+using System.IO;
 using System.Linq;
 using System.Windows.Forms;
-using System.IO;
+using WindowsFormsApp1.Core.Commands;
 
 namespace WindowsFormsApp1.Core
 {
@@ -186,7 +187,7 @@ namespace WindowsFormsApp1.Core
             List<Cell> changedCells = new();
             bool wasFirstClick = game.IsFirstClick;
 
-            ICommand cmd = null;
+            ICellCommand cmd = null;
 
             // Замість прямих викликів генерування команди
             if (e.Button == MouseButtons.Left)
@@ -266,21 +267,31 @@ namespace WindowsFormsApp1.Core
                 await replayManager.PlayReplayAsync();
             }
 
-            if (selectedDifficulty == Difficulty.Easy)
+            switch (selectedDifficulty)
             {
-                var result = MessageBox.Show("Вітаємо, Ви пройшли легкий рівень!\n\nПерейти до середнього рівня?", "Перемога", MessageBoxButtons.YesNo);
-                if (result == DialogResult.Yes) { radioMedium.Checked = true; StartGame(); labelProgress.Text = $"Відкрито:\n{game.GetRevealedPercentage()}%"; }
-            }
-            else if (selectedDifficulty == Difficulty.Medium)
-            {
-                var result = MessageBox.Show("Чудово! Ви пройшли середній рівень.\n\nПерейти до складного рівня?", "Перемога", MessageBoxButtons.YesNo);
-                if (result == DialogResult.Yes) { radioHard.Checked = true; StartGame(); labelProgress.Text = $"Відкрито:\n{game.GetRevealedPercentage()}%"; }
-            }
-            else if (selectedDifficulty == Difficulty.Hard)
-            {
-                MessageBox.Show("Вітаємо, Вам вдалось пройти останній рівень складності!", "Перемога", MessageBoxButtons.OK);
-                var result = MessageBox.Show("Грати ще раз?", "Нова гра", MessageBoxButtons.YesNo);
-                if (result == DialogResult.Yes) StartGame();
+                case Difficulty.Easy:
+                    if (MessageBox.Show("Вітаємо, Ви пройшли легкий рівень!\n\nПерейти до середнього рівня?", "Перемога", MessageBoxButtons.YesNo) == DialogResult.Yes)
+                    {
+                        radioMedium.Checked = true;
+                        StartGame();
+                    }
+                    break;
+
+                case Difficulty.Medium:
+                    if (MessageBox.Show("Чудово! Ви пройшли середній рівень.\n\nПерейти до складного рівня?", "Перемога", MessageBoxButtons.YesNo) == DialogResult.Yes)
+                    {
+                        radioHard.Checked = true;
+                        StartGame();
+                    }
+                    break;
+
+                case Difficulty.Hard:
+                    MessageBox.Show("Вітаємо, Вам вдалось пройти останній рівень складності!", "Перемога", MessageBoxButtons.OK);
+                    if (MessageBox.Show("Грати ще раз?", "Нова гра", MessageBoxButtons.YesNo) == DialogResult.Yes)
+                    {
+                        StartGame();
+                    }
+                    break;
             }
         }
 
@@ -431,23 +442,8 @@ namespace WindowsFormsApp1.Core
 
             resumeButton.Click += (s, e) =>
             {
-                isPaused = false;
-                timeManager.Start();
-
-                pauseOverlayPanel.Visible = false;
-
-                panelGame.Enabled = true;
-                buttonNewGame.Enabled = true;
-                buttonStartGame.Enabled = true;
-
-                radioEasy.Enabled = true;
-                radioMedium.Enabled = true;
-                radioHard.Enabled = true;
-
-                lblSafeOpensRemaining.BringToFront();
-                labelProgress.BringToFront();
-                customTooltip.BringToFront();
-                btnSafeCell.BringToFront();
+                // РЕФАКТОРИНГ: Замість дублювання коду викликаємо метод
+                ResumeGame();
             };
 
             Button saveExitButton = new Button
@@ -475,6 +471,47 @@ namespace WindowsFormsApp1.Core
             this.Controls.Add(pauseOverlayPanel);
         }
 
+
+        // --- ДОДАНО: Виділені методи для інкапсуляції логіки паузи (Extract Method) ---
+        private void PauseGame()
+        {
+            isPaused = true;
+            timeManager.Stop();
+
+            panelGame.Enabled = false;
+            buttonNewGame.Enabled = false;
+            buttonStartGame.Enabled = false;
+
+            radioEasy.Enabled = false;
+            radioMedium.Enabled = false;
+            radioHard.Enabled = false;
+
+            pauseOverlayPanel.Visible = true;
+            pauseOverlayPanel.BringToFront();
+        }
+
+        private void ResumeGame()
+        {
+            isPaused = false;
+            timeManager.Start();
+
+            panelGame.Enabled = true;
+            buttonNewGame.Enabled = true;
+            buttonStartGame.Enabled = true;
+
+            radioEasy.Enabled = true;
+            radioMedium.Enabled = true;
+            radioHard.Enabled = true;
+
+            pauseOverlayPanel.Visible = false;
+
+            lblSafeOpensRemaining.BringToFront();
+            labelProgress.BringToFront();
+            customTooltip.BringToFront();
+            btnSafeCell.BringToFront();
+        }
+        // ---------------------------------------------------------------------------------
+
         protected override bool ProcessCmdKey(ref Message msg, Keys keyData)
         {
             if (keyData == Keys.Escape)
@@ -484,38 +521,13 @@ namespace WindowsFormsApp1.Core
 
                 if (!isPaused)
                 {
-                    isPaused = true;
-                    timeManager.Stop();
-
-                    panelGame.Enabled = false;
-                    buttonNewGame.Enabled = false;
-                    buttonStartGame.Enabled = false;
-
-                    radioEasy.Enabled = false;
-                    radioMedium.Enabled = false;
-                    radioHard.Enabled = false;
-
-                    pauseOverlayPanel.Visible = true;
-                    pauseOverlayPanel.BringToFront();
+                    // РЕФАКТОРИНГ
+                    PauseGame();
                 }
                 else
                 {
-                    isPaused = false;
-                    timeManager.Start();
-
-                    panelGame.Enabled = true;
-                    buttonNewGame.Enabled = true;
-                    buttonStartGame.Enabled = true;
-
-                    radioEasy.Enabled = true;
-                    radioMedium.Enabled = true;
-                    radioHard.Enabled = true;
-
-                    pauseOverlayPanel.Visible = false;
-                    lblSafeOpensRemaining.BringToFront();
-                    labelProgress.BringToFront();
-                    customTooltip.BringToFront();
-                    btnSafeCell.BringToFront();
+                    // РЕФАКТОРИНГ
+                    ResumeGame();
                 }
 
                 return true;
@@ -527,23 +539,12 @@ namespace WindowsFormsApp1.Core
         private void pausePanel_Click(object sender, EventArgs e)
         {
             if (!gameStarted || game.State != GameState.Playing)
-                return; 
+                return;
 
             if (isPaused) return;
 
-                isPaused = true;
-                timeManager.Stop();
-
-                panelGame.Enabled = false;
-                buttonNewGame.Enabled = false;
-                buttonStartGame.Enabled = false;
-
-                radioEasy.Enabled = false;
-                radioMedium.Enabled = false;
-                radioHard.Enabled = false;
-
-                pauseOverlayPanel.Visible = true;
-                pauseOverlayPanel.BringToFront();
+            // РЕФАКТОРИНГ
+            PauseGame();
         }
 
         private string GetDifficultyDisplayName(Difficulty diff)
