@@ -10,8 +10,13 @@ namespace WindowsFormsApp1.Core
         public Difficulty Difficulty { get; private set; }
         public GameState State { get; private set; }
 
+        // Нове поле для фабрики
+        private readonly IBoardFactory _boardFactory;
+
         public Game(Difficulty difficulty)
         {
+            // Ініціалізуємо фабрику в конструкторі
+            _boardFactory = new BoardFactory();
             Difficulty = difficulty;
             StartNewGame();
         }
@@ -19,23 +24,15 @@ namespace WindowsFormsApp1.Core
         public void StartNewGame()
         {
             State = GameState.Playing;
-            Board = CreateBoard(Difficulty);
+            // Використовуємо фабрику замість старого приватного методу
+            Board = _boardFactory.CreateBoard(Difficulty);
         }
 
         public event Action<GameState> GameEnded;
 
         private bool isFirstClick = true;
 
-        private Board CreateBoard(Difficulty difficulty)
-        {
-            return difficulty switch
-            {
-                Difficulty.Easy => new Board(8, 10, 10),
-                Difficulty.Medium => new Board(12, 16, 40),
-                Difficulty.Hard => new Board(16, 22, 70),
-                _ => throw new ArgumentOutOfRangeException()
-            };
-        }
+        // --- СТАРИЙ МЕТОД CreateBoard ДЕЛЕТНУТО ЗВІДСИ ---
 
         public List<Cell> RevealCell(int row, int col)
         {
@@ -189,7 +186,8 @@ namespace WindowsFormsApp1.Core
             this.State = memento.CurrentState;
             this.isFirstClick = memento.IsFirstClick;
 
-            this.Board = CreateBoard(this.Difficulty);
+            // Використовуємо фабрику для перестворення путого поля потрібного розміру
+            this.Board = _boardFactory.CreateBoard(this.Difficulty);
 
             foreach (var savedCell in memento.Cells)
             {
