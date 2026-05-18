@@ -10,11 +10,13 @@ namespace WindowsFormsApp1.Core
         public Board Board { get; private set; }
         public Difficulty Difficulty { get; private set; }
         public GameState State { get; private set; }
+
         public Game(Difficulty difficulty)
         {
             Difficulty = difficulty;
             StartNewGame();
         }
+
         public void StartNewGame()
         {
             State = GameState.Playing;
@@ -127,25 +129,42 @@ namespace WindowsFormsApp1.Core
         public int GetRevealedPercentage()
         {
             if (State == GameState.Won)
-            {
                 return 100;
-            }
 
             int total = Board.Cells.Length;
             int revealed = Board.Cells.Cast<Cell>().Count(c => c.IsRevealed);
             return (int)((revealed / (double)total) * 100);
         }
 
-        // Створення та відновлення стану 
         public GameMemento CreateMemento(int currentElapsedSeconds)
+        {
+            return BuildMemento(
+                elapsedSeconds: currentElapsedSeconds,
+                state: this.State,
+                isFirstClick: this.isFirstClick,
+                saveRevealState: true
+            );
+        }
+
+        public GameMemento GetCleanState()
+        {
+            return BuildMemento(
+                elapsedSeconds: 0,
+                state: GameState.Playing,
+                isFirstClick: false,
+                saveRevealState: false
+            );
+        }
+
+        private GameMemento BuildMemento(int elapsedSeconds, GameState state, bool isFirstClick, bool saveRevealState)
         {
             var memento = new GameMemento
             {
                 PlayerName = ProfileManager.Instance.CurrentProfile.Name,
                 GameDifficulty = this.Difficulty,
-                ElapsedSeconds = currentElapsedSeconds,
-                CurrentState = this.State,
-                IsFirstClick = this.isFirstClick
+                ElapsedSeconds = elapsedSeconds,
+                CurrentState = state,
+                IsFirstClick = isFirstClick
             };
 
             foreach (var cell in Board.Cells)
@@ -154,12 +173,13 @@ namespace WindowsFormsApp1.Core
                 {
                     X = cell.X,
                     Y = cell.Y,
-                    IsRevealed = cell.IsRevealed,
                     IsMine = cell.IsMine,
-                    IsFlagged = cell.IsFlagged,
-                    NeighborMineCount = cell.NeighborMineCount
+                    NeighborMineCount = cell.NeighborMineCount,
+                    IsRevealed = saveRevealState && cell.IsRevealed,
+                    IsFlagged = saveRevealState && cell.IsFlagged
                 });
             }
+
             return memento;
         }
 
@@ -169,10 +189,8 @@ namespace WindowsFormsApp1.Core
             this.State = memento.CurrentState;
             this.isFirstClick = memento.IsFirstClick;
 
-            // Перестворення пустого поля потрібного розміру
             this.Board = CreateBoard(this.Difficulty);
 
-            // Відновлення стану кожної клітинки
             foreach (var savedCell in memento.Cells)
             {
                 var cell = Board.Cells[savedCell.X, savedCell.Y];
@@ -184,32 +202,5 @@ namespace WindowsFormsApp1.Core
         }
 
         public bool IsFirstClick => isFirstClick;
-
-        // Зберігання чистого стану поля з розставленими мінами
-        public GameMemento GetCleanState()
-        {
-            var memento = new GameMemento
-            {
-                PlayerName = ProfileManager.Instance.CurrentProfile.Name,
-                GameDifficulty = this.Difficulty,
-                ElapsedSeconds = 0,
-                CurrentState = GameState.Playing,
-                IsFirstClick = false
-            };
-
-            foreach (var cell in Board.Cells)
-            {
-                memento.Cells.Add(new CellMemento
-                {
-                    X = cell.X,
-                    Y = cell.Y,
-                    IsMine = cell.IsMine,
-                    NeighborMineCount = cell.NeighborMineCount,
-                    IsRevealed = false,
-                    IsFlagged = false
-                });
-            }
-            return memento;
-        }
     }
 }
