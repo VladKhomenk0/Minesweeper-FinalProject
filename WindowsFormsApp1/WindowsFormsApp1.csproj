@@ -79,8 +79,10 @@
   <ItemGroup>
     <Compile Include="Core\Board.cs" />
     <Compile Include="Core\Cell.cs" />
-    <Compile Include="Core\CellImageResolver.cs" />
-    <Compile Include="Core\Commands.cs" />
+    <Compile Include="Core\Commands\BaseCellCommand.cs" />
+    <Compile Include="Core\Commands\FlagCommand.cs" />
+    <Compile Include="Core\Commands\ICellCommand.cs" />
+    <Compile Include="Core\Commands\RevealCommand.cs" />
     <Compile Include="Core\Difficulty.cs" />
     <Compile Include="Core\GameMemento.cs" />
     <Compile Include="Core\Profile.cs" />
