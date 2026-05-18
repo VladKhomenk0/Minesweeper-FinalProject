@@ -1,5 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
+﻿using System.Collections.Generic;
 using System.Drawing;
 using System.Linq;
 using System.Windows.Forms;
@@ -24,44 +23,40 @@ namespace WindowsFormsApp1.Core
 
         public void DrawBoard(MouseEventHandler cellClickHandler)
         {
-            panel.Controls.Clear();
-            int rows = game.Board.Rows;
-            int cols = game.Board.Columns;
+            _panel.Controls.Clear();
 
-            for (int row = 0; row < rows; row++)
+            for (int row = 0; row < _game.Board.Rows; row++)
             {
-                for (int col = 0; col < cols; col++)
+                for (int col = 0; col < _game.Board.Columns; col++)
                 {
-                    Cell cell = game.Board.GetCell(row, col);
-                    PictureBox pic = new PictureBox
+                    Cell cell = _game.Board.GetCell(row, col);
+
+                    var pic = new PictureBox
                     {
-                        Width = cellSize,
-                        Height = cellSize,
-                        Left = col * cellSize,
-                        Top = row * cellSize,
+                        Width = _cellSize,
+                        Height = _cellSize,
+                        Left = col * _cellSize,
+                        Top = row * _cellSize,
                         Tag = new Point(row, col),
                         Margin = new Padding(0),
                         SizeMode = PictureBoxSizeMode.StretchImage
                     };
 
                     pic.Paint += PictureBox_Paint;
-                    UpdateCellAppearance(pic, cell);
                     pic.MouseUp += cellClickHandler;
-
-                    panel.Controls.Add(pic);
+                    UpdateCellAppearance(pic, cell);
+                    _panel.Controls.Add(pic);
                 }
             }
         }
 
         public void RedrawBoard()
         {
-            foreach (Control control in panel.Controls)
+            foreach (Control control in _panel.Controls)
             {
-                if (control is PictureBox pic)
+                if (control is PictureBox pic && pic.Tag is Point p)
                 {
-                    Point p = (Point)pic.Tag;
-                    Cell cell = game.Board.GetCell(p.X, p.Y);
-                    UpdateCellAppearance(pic, cell);
+                    UpdateCellAppearance(pic, _game.Board.GetCell(p.X, p.Y));
                     pic.Invalidate();
                 }
             }
@@ -69,11 +64,11 @@ namespace WindowsFormsApp1.Core
 
         public void RedrawCells(List<Cell> cells)
         {
-            foreach (Control control in panel.Controls)
+            foreach (Control control in _panel.Controls)
             {
                 if (control is PictureBox pic && pic.Tag is Point p)
                 {
-                    Cell cell = cells.FirstOrDefault(c => c.X == p.X && c.Y == p.Y);
+                    Cell cell = cells.Find(c => c.X == p.X && c.Y == p.Y);
                     if (cell != null)
                     {
                         UpdateCellAppearance(pic, cell);
@@ -82,32 +77,9 @@ namespace WindowsFormsApp1.Core
                 }
             }
         }
-
         private void UpdateCellAppearance(PictureBox pictureBox, Cell cell)
         {
-            if (cell.IsRevealed)
-            {
-                if (cell.IsMine)
-                {
-                    pictureBox.Image = cellImages["mine"];
-                }
-                else if (cell.NeighborMineCount > 0)
-                {
-                    pictureBox.Image = cellImages[$"field_{cell.NeighborMineCount}"];
-                }
-                else
-                {
-                    pictureBox.Image = cellImages["ground"];
-                }
-            }
-            else if (cell.IsFlagged)
-            {
-                pictureBox.Image = cellImages["flag"];
-            }
-            else
-            {
-                pictureBox.Image = cellImages["field_0"];
-            }
+            pictureBox.Image = _imageResolver.Resolve(cell);
         }
 
         // Тепер метод просто додає клітинку до списку підсвічених та оновлює її на екрані
@@ -117,7 +89,10 @@ namespace WindowsFormsApp1.Core
             {
                 highlightedCells.Add(cell);
 
-                foreach (Control ctrl in panel.Controls)
+            foreach (Control ctrl in _panel.Controls)
+            {
+                if (ctrl is PictureBox pic && pic.Tag is Point p &&
+                    p.X == cell.X && p.Y == cell.Y)
                 {
                     if (ctrl is PictureBox pic && pic.Tag is Point p && p.X == cell.X && p.Y == cell.Y)
                     {
@@ -144,13 +119,10 @@ namespace WindowsFormsApp1.Core
         {
             if (sender is PictureBox pic && pic.Tag is Point p)
             {
-                Cell cell = game.Board.GetCell(p.X, p.Y);
-                if (highlightedCells.Contains(cell))
+                if (_highlightedCells.Contains(_game.Board.GetCell(p.X, p.Y)))
                 {
-                    using (Pen pen = new Pen(Color.LimeGreen, 2))
-                    {
+                    using (var pen = new Pen(Color.LimeGreen, 2))
                         e.Graphics.DrawRectangle(pen, 0, 0, pic.Width - 1, pic.Height - 1);
-                    }
                 }
             }
         }
