@@ -2,20 +2,17 @@
 using System.Collections.Generic;
 using System.Drawing;
 using System.Linq;
-using System.Runtime.CompilerServices;
 using System.Windows.Forms;
 
 namespace WindowsFormsApp1.Core
 {
     public class GameRenderer
     {
-        private Panel panel;
-        private Game game;
-        private int cellSize;
-        private int maxHighlights;
-        private int highlightCount = 0;
-        private Dictionary<string, Image> cellImages;
-        private List<Cell> highlightedCells = new List<Cell>();
+        private readonly Panel panel;
+        private readonly Game game;
+        private readonly int cellSize;
+        private readonly Dictionary<string, Image> cellImages;
+        private readonly List<Cell> highlightedCells = new List<Cell>();
 
         public GameRenderer(Panel panel, Game game, int cellSize, Dictionary<string, Image> cellImages)
         {
@@ -23,14 +20,6 @@ namespace WindowsFormsApp1.Core
             this.game = game;
             this.cellSize = cellSize;
             this.cellImages = cellImages;
-
-            maxHighlights = game.Difficulty switch
-            {
-                Difficulty.Easy => 3,
-                Difficulty.Medium => 5,
-                Difficulty.Hard => 7,
-                _ => 0
-            };
         }
 
         public void DrawBoard(MouseEventHandler cellClickHandler)
@@ -121,41 +110,34 @@ namespace WindowsFormsApp1.Core
             }
         }
 
+        // Тепер метод просто додає клітинку до списку підсвічених та оновлює її на екрані
         public void HighlightCell(Cell cell)
         {
-            if (highlightCount >= maxHighlights)
-            {
-                MessageBox.Show($"Ви використали всі {maxHighlights} підсвічування для цього рівня складності.", "Увага", MessageBoxButtons.OK);
-                return;
-            }
-
             if (!highlightedCells.Contains(cell))
             {
                 highlightedCells.Add(cell);
-                highlightCount++;
 
                 foreach (Control ctrl in panel.Controls)
                 {
-                    if (ctrl is PictureBox pic && pic.Tag is Point p)
+                    if (ctrl is PictureBox pic && pic.Tag is Point p && p.X == cell.X && p.Y == cell.Y)
                     {
-                        if (p.X == cell.X && p.Y == cell.Y)
-                        {
-                            pic.Invalidate();
-                            break;
-                        }
+                        pic.Invalidate();
+                        break;
                     }
                 }
             }
         }
 
-        public string GetRemainingHighlights()
+        // Перевірка підсвічування для зовнішнього використання
+        public bool IsCellHighlighted(Cell cell)
         {
-            return $"{maxHighlights - highlightCount}/{maxHighlights}";
+            return highlightedCells.Contains(cell);
         }
 
-        public bool IsHighlightsLimitReached()
+        // Очищення підсвічувань при перезапуску гри
+        public void ClearHighlights()
         {
-            return highlightCount >= maxHighlights;
+            highlightedCells.Clear();
         }
 
         private void PictureBox_Paint(object sender, PaintEventArgs e)
